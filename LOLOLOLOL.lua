@@ -4,11 +4,12 @@ last updated 12/5/2021
 please note this is wip and a lot of the things are nowhere near done 
 
 credits: lurk (me, i made the script), 
-xaxa (prison aimlock method and oldfly method), 
+xaxa (prison aimlock method and oldfly method), I
 machport(shadowing on ui elements), 
 i have 0 clue who made the ui lib
 
 ]]
+repeat wait() until game.IsLoaded
 if not syn then
     game.Players.LocalPlayer:Kick("Exploit not supported")
 else
@@ -270,10 +271,13 @@ local Char, BPack = game.Players.LocalPlayer.Character, game.Players.LocalPlayer
 local USI = game:GetService("UserInputService")
 local ClockTime = 7
 local CamMode = "Rigid"
+local EspFont = 0
+local ItemEspFont = "Code"
 --
 
 --[[ For Commands and what not ]]
-local Flying, Aimlock, Blink, Camlock, TpBypass, AntiFe, Noclip, InfStam =
+local Flying, Aimlock, Blink, Camlock, TpBypass, AntiFe, Noclip, InfStam,ShootY =
+    false,
     false,
     false,
     false,
@@ -286,17 +290,20 @@ local FlyMethod = "New"
 local AntiGH = false
 
 local AimVelocity, Flyspeed, Blinkspeed = 5, 10, 2
-local AimPart, AimlockPlayer, CamlockPlayer, AimMode, CamPart, FirstFly =
+local PrisonMode = "PrisonReg"
+local AimPart, AimlockPlayer, CamlockPlayer, AimMode, CamPart, FirstFly,ItemEsp =
     "Torso",
     nil,
     nil,
     "OldVelocity",
     "Torso",
-    false
+    false,
+    true
 
 local AntiSit = false
 local BulletColor, BulletTrailTime, BulletTransparency = Color3.fromRGB(255, 255, 255), 0.5, 0.5
-
+local EspFontSize = 23
+local ItemEspFontSize
 local Vector3, CFrame, Vector2, UDim2, UDim, NewIns =
     Vector3.new,
     CFrame.new,
@@ -343,7 +350,7 @@ getgenv().Notify = function(title, description, image, time)
     end
 
     local BackFrame = NewIns("Frame")
-    local Shadow = NewIns("ImageLabel")
+    local NotifShadow = NewIns("ImageLabel")
     local Title = NewIns("TextLabel")
     local Desc = NewIns("TextLabel")
     local UIGradient = NewIns("UIGradient")
@@ -358,22 +365,22 @@ getgenv().Notify = function(title, description, image, time)
     BackFrame.Position = UDim2(0.819454432, 0, 2, 0)
     BackFrame.Size = UDim2(0, 302, 0, 59)
 
-    Shadow.Name = "Shadow"
-    Shadow.Parent = BackFrame
-    Shadow.AnchorPoint = Vector2(0.5, 0.5)
-    Shadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Shadow.BackgroundTransparency = 1.000
-    Shadow.Position = UDim2(0.5, 0, 0.479999989, 0)
-    Shadow.Size = UDim2(1, 45, 1.03999996, 45)
-    Shadow.ZIndex = 0
-    Shadow.Image = "rbxassetid://2654849154"
-    Shadow.ImageColor3 = Color3.fromRGB(86, 0, 232)
-    Shadow.ImageRectOffset = Vector2(2, 2)
-    Shadow.ImageRectSize = Vector2(252, 252)
-    Shadow.ImageTransparency = 0.500
-    Shadow.ScaleType = Enum.ScaleType.Slice
-    Shadow.SliceCenter = Rect.new(64, 64, 192, 192)
-    Shadow.SliceScale = 0.310
+    NotifShadow.Name = "Shadow"
+    NotifShadow.Parent = BackFrame
+    NotifShadow.AnchorPoint = Vector2(0.5, 0.5)
+    NotifShadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    NotifShadow.BackgroundTransparency = 1.000
+    NotifShadow.Position = UDim2(0.5, 0, 0.479999989, 0)
+    NotifShadow.Size = UDim2(1, 45, 1.03999996, 45)
+    NotifShadow.ZIndex = 0
+    NotifShadow.Image = "rbxassetid://2654849154"
+    NotifShadow.ImageColor3 = Color3.fromRGB(86, 0, 232)
+    NotifShadow.ImageRectOffset = Vector2(2, 2)
+    NotifShadow.ImageRectSize = Vector2(252, 252)
+    NotifShadow.ImageTransparency = 0.500
+    NotifShadow.ScaleType = Enum.ScaleType.Slice
+    NotifShadow.SliceCenter = Rect.new(64, 64, 192, 192)
+    NotifShadow.SliceScale = 0.310
 
     Title.Name = "Title"
     Title.Parent = BackFrame
@@ -417,7 +424,7 @@ getgenv().Notify = function(title, description, image, time)
     BackFrame:TweenPosition(UDim2(0.819454432, 0, 0.93, 0), "Out", "Sine", TweenTime)
     wait(time)
     FadeObject(BackFrame)
-    FadeObject(Shadow)
+    FadeObject(NotifShadow)
     FadeObject(Desc)
     FadeObject(Title)
 end -- ill make a new one eventually this one kinda sucks
@@ -431,7 +438,7 @@ AirWalk.Anchored = true
 AirWalk.Size = Vector3(20, 1, 20)
 AirWalk.Transparency = 1
 AirWalk.Name = "AirWalk"
-local PartFound = LP.Character:FindFirstChild "Torso"
+local PartFound = LP.Character:FindFirstChild("Torso")
 local KeysTable = {
     ["W"] = false,
     ["A"] = false,
@@ -441,6 +448,8 @@ local KeysTable = {
     ["LControl"] = false
 }
 
+local ACFlags, INFlags = {"HipHeight","Health"},{"bv","hb","ws"}
+    
 local AimPartTable = {
     ["head"] = "Head",
     ["torso"] = "Torso",
@@ -535,7 +544,7 @@ Bar.Position = UDim2(0.0298507456, 0, 0, 0)
 Bar.Size = UDim2(0, 325, 0, 29)
 Bar.Font = Enum.Font.Code
 Bar.PlaceholderColor3 = Color3.fromRGB(178, 178, 178)
-Bar.PlaceholderText = "EvilWare hitting p100 - xaxa"
+Bar.PlaceholderText = "Type Command (NO PREFIX)"
 Bar.Text = ""
 Bar.TextColor3 = Color3.fromRGB(178, 178, 178)
 Bar.TextSize = 14.000
@@ -555,6 +564,7 @@ USI.InputBegan:Connect(
             cmdBar:CaptureFocus()
             wait()
             cmdBar.Text = ""
+            
         end
     end
 )
@@ -563,12 +573,53 @@ cmdBar.FocusLost:Connect(
         if Foc == true then
             cmdbarFrame:TweenPosition(UDim2(-1, 0, 0.476, 0), "Out", "Sine", 0.2, true)
             RunCommand(cmdBar.Text)
-            cmdBar.Text = ""
+            --cmdBar.Text = ""
         end
     end
 )
 
 esploop = nil
+getgenv().checkgod = function(Player)
+    local godded;
+    if Player and Player.Character then
+    godded = Player.Character:FindFirstChild("Right Leg",true)
+    
+end
+return godded and "false" or "true"
+end
+
+getgenv().checkuser = function(Player)
+    local ISAUser;
+    if Player and Player.Character then 
+        ISAUser = Player.Character:FindFirstChild("xensystem",true)
+    end
+    return ISAUser and "true" or "false"
+end
+
+
+getgenv().checkgun = function(Player)
+    local GunFound;
+    if Player then
+        GunFound = Player.Character:FindFirstChildOfClass("Tool",true)
+end
+return GunFound and GunFound.Name or "Nil";
+end
+
+getgenv().checkammo = function(Player)
+    local AmmoFound;
+    if Player and Player.Character:FindFirstChildOfClass("Tool") then
+        AmmoFound = Player.Character:FindFirstChildOfClass("Tool"):FindFirstChild("Ammo",true)
+end
+return AmmoFound and AmmoFound.Value or "Nil";
+end
+
+getgenv().checkclips = function(Player)
+    local ClipsFound;
+    if Player and Player.Character:FindFirstChildOfClass("Tool")then
+        ClipsFound = Player.Character:FindFirstChildOfClass("Tool"):FindFirstChild("Clips",true)
+end
+return ClipsFound and ClipsFound.Value or "Nil";
+end
 
 local ESPedPlayers = {}
 getgenv().ESPPlayer = function(Player)
@@ -576,17 +627,19 @@ getgenv().ESPPlayer = function(Player)
     ESPedPlayers[#ESPedPlayers + 1] = {
         ["Player"] = Player,
         ["Box"] = Drawing.new("Quad"),
-        ["BoxText"] = Drawing.new("Text")
+        ["BoxText"] = Drawing.new("Text"),
     }
-    
     local width = 4
     local height = 6
-
+  
     esploop =
         RunService.RenderStepped:connect(
         function()
-            local ScreenSpacePos, IsOnScreen = Camera:WorldToViewportPoint(Player.Character.HumanoidRootPart.Position)
+            local LolPos,IsOnScreen = Camera:WorldToViewportPoint(Player.Character.Torso.Position)
+           
             if IsOnScreen then
+                
+                 --DistanceY = math.clamp((Vector2(Player.Character.Head.Position.X, Player.Character.Head.Position.Y) - Vector2(Player.Character.Torso.Position.X, Player.Character.HumanoidRootPart.Position.Y)).magnitude, 2, math.huge)
                 a =
                     Camera:WorldToViewportPoint(
                     Player.Character.Torso.CFrame:PointToWorldSpace(Vector3(width / 2, height / 2, 0))
@@ -604,11 +657,10 @@ getgenv().ESPPlayer = function(Player)
                     Camera:WorldToViewportPoint(
                     Player.Character.Torso.CFrame:PointToWorldSpace(Vector3(width / 2, -height / 2, 0))
                 )
-
-              
-                textposition =
-                    Camera:WorldToViewportPoint(Player.Character.Torso.CFrame:PointToWorldSpace(Vector3(0, -3, 0)))
+                textposition = Camera:WorldToViewportPoint(Player.Character.Torso.CFrame:PointToWorldSpace(Vector3(0, -3, 0)))
+                ammopos =  Camera:WorldToViewportPoint(Player.Character.Torso.CFrame:PointToWorldSpace(Vector3(0, -4, 0)))
                 textposition = Vector2(textposition.X, textposition.Y)
+                ammopos = Vector2(ammopos.X, ammopos.Y)
 
                 a = Vector2(a.X, a.Y)
                 b = Vector2(b.X, b.Y)
@@ -616,44 +668,52 @@ getgenv().ESPPlayer = function(Player)
                 d = Vector2(d.X, d.Y)
 
                 for i = 1, #ESPedPlayers do
-                    local Table = ESPedPlayers[i]
+                    local ESP_TABLE = ESPedPlayers[i]
                     if Player and Player.Character then
-                         Table["BoxText"].Position = textposition
-                         Table["BoxText"].Size = 16 
-                         Table["BoxText"].Center = true 
-                         Table["BoxText"].Outline = true 
-                         Table["BoxText"].OutlineColor = Color3.fromRGB(0,0,0)
-                         Table["BoxText"].Font = 3
-                         Table["BoxText"].Color = Color3.fromRGB(255,255,255)
-                         Table["BoxText"].Visible = true 
+                         ESP_TABLE["BoxText"].Position = textposition
+                         ESP_TABLE["BoxText"].Size = EspFontSize
+                         ESP_TABLE["BoxText"].Center = true 
+                         ESP_TABLE["BoxText"].Outline = true 
+                         ESP_TABLE["BoxText"].OutlineColor = Color3.fromRGB(0,0,0)
+                         ESP_TABLE["BoxText"].Font = EspFont
+                         ESP_TABLE["BoxText"].Color = Color3.fromRGB(255,255,255)
+                         ESP_TABLE["BoxText"].Visible = true 
+                       
                          
-                         Table["Box"].PointA = a
-                         Table["Box"].PointB = b
-                         Table["Box"].PointC = c
-                         Table["Box"].PointD = d
-                         Table["Box"].Color = Color3.fromRGB(86,0,232)
-                         Table["Box"].Thickness = 2  
-                         Table["Box"].Filled = false
-                         Table["Box"].Visible = true
-                         Table["BoxText"].Text =
+                         
+                         ESP_TABLE["Box"].PointA = a
+                         ESP_TABLE["Box"].PointB = b
+                         ESP_TABLE["Box"].PointC = c
+                         ESP_TABLE["Box"].PointD = d
+                         ESP_TABLE["Box"].Color = Color3.fromRGB(86,0,232)
+                         ESP_TABLE["Box"].Thickness = 2  
+                         ESP_TABLE["Box"].Filled = false
+                         ESP_TABLE["Box"].Visible = true
+                         
+                         ESP_TABLE["BoxText"].Text =
                     Player.Name ..
                     " [" ..
                         math.floor(Player.Character.Humanoid.Health) ..
                             "/" ..
                                 math.floor(Player.Character.Humanoid.MaxHealth) ..
-                                    "] [" .. math.floor(Player:DistanceFromCharacter(LP.Character.Head.Position)) .. "]"
+                                    "] [" .. math.floor(Player:DistanceFromCharacter(LP.Character.Head.Position)) .. "]" .. "\n " .. "" .. checkgun(Player) .. " [" .. checkammo(Player) .. "/" .. checkclips(Player) .. "]" .. "\n" .. "Godmode: [" .. checkgod(Player) .. "] User: [" .. checkuser(Player) .. "]"
+                    end
+                        
+            if IsOnScreen == false  then
+                ESP_TABLE["Box"].Visible = false
+                ESP_TABLE["BoxText"].Visible = false
+            end
 
-                
+            if IsOnScreen  then
+               ESP_TABLE["Box"].Visible = true
+               ESP_TABLE["BoxText"].Visible = true
             end
-            if not IsOnScreen then
-                Table["Box"].Visible = false
-                Table["BoxText"].Visible = false
+            if Player == nil then 
+                ESP_TABLE["Box"]:Remove()
+                ESP_TABLE["BoxText"]:Remove()
+                esploop:Disconnect()
             end
-
-            if IsOnScreen and ESPedPlayers["Player"] then
-               Table["Box"].Visible = true
-               Table["BoxText"].Visible = true
-            end
+            
         end
     end
 end)
@@ -669,9 +729,7 @@ for i = 1,#ESPedPlayers do
 			if Player == Thing then 
 				for i,v in pairs(Table) do
 					if v ~= Player then 
-						
 							v:Remove()
-						
 					end
 				end
 				table.remove(ESPedPlayers,i)
@@ -679,7 +737,103 @@ for i = 1,#ESPedPlayers do
 		end 
 end
 end
+
+
+TracerPart = nil
+
+ getgenv().itemesppart = function(instance)
+    local types = ""
+    local EspText = ""
+    local EspColor = BrickColor.new("White")
+    local EspPart = instance
+    if ItemEsp == true then 
+    for i,v in pairs(instance:GetDescendants()) do
+        if v:IsA("MeshPart") and v.MeshId == "rbxassetid://511726060" then
+            TracerPart.Parent = v
+            types = "cash"
+            EspColor = BrickColor.new("White")
+            EspPart = v:FindFirstAncestor("RandomSpawner")
+            EspText = "Cash"
+         elseif v:IsA("Sound") and v.Name == "Fire" and string.find(tostring(v.SoundId), tostring(328964620)) then
+            types = "uzi"
+            EspText = "Uzi"
+            EspColor = BrickColor.new("White")
+            EspPart = v:FindFirstAncestor("RandomSpawner")
+        elseif v:IsA("Sound") and v.Name == "Fire" and string.find(tostring(v.SoundId), tostring(142383762)) then
+            types = "shotty"
+            EspText = "Shotty"
+            EspColor = BrickColor.new("White")
+            EspPart = v:FindFirstAncestor("RandomSpawner")
+        end
+    end
+
+    TracerPart = NewIns("Part")
+    TracerPart.Parent = EspPart
+    TracerPart.Name = "TracerPart"
+    TracerPart.CFrame = EspPart.CFrame
+    TracerPart.Position = EspPart.Position
+    TracerPart.Size = Vector3(0.2,0.2,0.2)
+    TracerPart.Anchored = true
+    TracerPart.Transparency = 1
+
+    local billgui = NewIns('BillboardGui', TracerPart)
+    local textlab = NewIns('TextLabel', billgui)
+
+    billgui.Name = "ESPBillboard"
+    billgui.Adornee  = TracerPart
+    billgui.AlwaysOnTop = true
+    billgui.ExtentsOffset = Vector3(0, 1, 0)
+    billgui.Size = UDim2(0, 5, 0, 5)
 	
+    textlab.Name = "ESPLabel"
+    textlab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    textlab.BackgroundTransparency = 1
+    textlab.BorderSizePixel = 0
+    textlab.Position = UDim2(0, 0, 0, -40)
+    textlab.Size = UDim2(1, 0, 10, 0)
+    textlab.Visible = true
+    textlab.Text = ""
+    textlab.ZIndex = 10
+    textlab.Font = ItemEspFont
+    textlab.TextSize = ItemEspFontSize
+    
+    textlab.TextColor = BrickColor.new("White")
+    textlab.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+    textlab.TextStrokeTransparency = 0.2
+    game:GetService("RunService").Stepped:Connect(function()
+        if EspText == "Shotty" or EspText == "Uzi" or EspText == "Cash" then
+    textlab.Text =  "(".. EspText ..")" .. "\n" .. "Distance: ["..math.floor(LP:DistanceFromCharacter(EspPart.Position)).."]" 
+end
+end)
+end
+end
+for i,v in pairs(game.Workspace:GetChildren()) do
+    if v.Name == "RandomSpawner" and ItemEsp == true then
+        itemesppart(v)
+    end
+end
+
+for i,v in pairs(game.Workspace:GetChildren()) do
+    if v.Name == "RandomSpawner" then
+        if v:FindFirstChild("Model") and ItemEsp == true then
+            v.Model.ChildAdded:Connect(function(child)
+                itemesppart(child)
+            end)
+        end
+        v.ChildAdded:Connect(function(child)
+            itemesppart(child)
+        end)
+    end
+end
+
+game.Workspace.ChildAdded:Connect(function(child)
+    if child.Name == "RandomSpawner" and ItemEsp == true then
+        repeat wait() until child.Model
+        itemesppart(child)
+    end
+end)
+
+
 local EspTable = {
     [2243304087] = {
         ["NAME"] = "Lurk (Head Developer)",
@@ -989,25 +1143,31 @@ getgenv().PShootPlayer = function(Plr) -- xaxa made this not me! dw i will credi
         Tool.Fire:FireServer(
             CFrame(AimlockPlayer.Character[AimPart].Position) +
                 Vector3(
-                    AimlockPlayer.Character[AimPart].Velocity.X / AimVelocity +
-                        AimlockPlayer.Character[AimPart].RotVelocity.X / AimVelocity,
-                    AimlockPlayer.Character[AimPart].Velocity.Y / AimVelocity +
-                        AimlockPlayer.Character[AimPart].RotVelocity.Y / AimVelocity, -- i tried this fucking method and its 10x better than mine and it annoys me
-                    AimlockPlayer.Character[AimPart].Velocity.Z / AimVelocity +
-                        AimlockPlayer.Character[AimPart].RotVelocity.Z / AimVelocity
-                )
+                     AimlockPlayer.Character[AimPart].Velocity / AimVelocity  + AimlockPlayer.Character[AimPart].Velocity / math.huge
+                ) 
         )
     end
 end
 
 -- Incase I want to ever add other methods!
 getgenv().ShootPlayerPos = function()
-    local AimPos  -- initially nil
+    
+    local AimPos  -- initially nil so we can return it later
     local Funny = AimlockPlayer.Character[AimPart]
-    if AimPart and AimMode == "NewVelocity" then
+    
+    
+    if AimPart and AimMode == "NewVelocity" and ShootY == true then
         AimPos = Funny.CFrame + Funny.Velocity / AimVelocity + Funny.Velocity / math.huge
-    elseif AimPart and AimMode == "OldVelocity" then
+        
+    elseif AimPart and AimMode == "NewVelocity" and ShootY == false then
+        
+        AimPos = Funny.CFrame  + Funny.Velocity / AimVelocity + Funny.Velocity / math.huge
+        
+    elseif AimPart and AimMode == "OldVelocity" and ShootY == true then
         AimPos = Funny.CFrame + Funny.Velocity / AimVelocity
+        
+    elseif AimPart and AimMode == "OldVelocity" and ShootY == false then 
+        AimPos = Funny.CFrame  + Funny.Velocity / AimVelocity
     end
     return AimPos
 end
@@ -1210,7 +1370,7 @@ USI.InputBegan:Connect(
                 end
             end
 
-            if Key.KeyCode == Enum.KeyCode[PShootKey] and game.PlaceId ~= (Streets) then
+            if Key.KeyCode == Enum.KeyCode[PShootKey] and game.PlaceId ~= (Streets) and PrisonMode == "Keybind" then
                 while USI:IsKeyDown(Enum.KeyCode[PShootKey]) and RunService.Heartbeat:Wait() do
                     pcall(
                         function()
@@ -1228,7 +1388,7 @@ USI.InputBegan:Connect(
                     Teleporting = true
                     Keyheld = true
                     while Teleporting == true and Keyheld == true and RunService.Heartbeat:Wait() do
-                        RootTP.CFrame = AmmoRoot:FindFirstChildOfClass("Part").CFrame + Vector3(0.1, 1.1, 0.1)
+                        RootTP.CFrame = game.Workspace:FindFirstChild("Buy Ammo | $25"):FindFirstChildOfClass("Part").CFrame + Vector3(0.1, 1.1, 0.1)
                     end
                 end
             end
@@ -1339,15 +1499,7 @@ local newcclosure, getnamecallmethod, checkcaller, getcaller =
     getnamecallmethod,
     checkcaller,
     getcallingscript
-local ACFlags, INFlags = {
-        "HipHeight",
-        "Health"
-    },
-    {
-        "bv",
-        "hb",
-        "ws"
-    }
+
 
 local NewIndex, NameCall
 do
@@ -1386,7 +1538,7 @@ do
             return NameCall(self, unpack(Args))
         end
 
-        if (Method == "Destroy" or Method == "Kick") and (self == LP or IsA(self, "BodyMover")) then
+        if (Method == "Destroy" or Method == "Kick") and (self == LP or IsA(self, "HumanoidRootPart")) then
             return wait(9e9)
         end
         if Method == "BreakJoints" and self == LP.Character then
@@ -1395,7 +1547,7 @@ do
 
         if
             (Method == "WaitForChild" or Method == "FindFirstChild") and getcaller() ~= script and TpBypass == true and
-                Args[1] == "HumanoidRootPart"
+                Args[1] == "Torso"
          then
             Args[1] = "Torso"
             return NameCall(self, unpack(Args))
@@ -1407,12 +1559,6 @@ do
             end
 
             local Name = self.Name
-
-            if Name == "Fire" and Aimlock and AimlockPlayer then
-                if AimMode == "NewPShoot" then
-                    return NameCall(self, ShootPlayerPos())
-                end
-            end
 
             if Name == "Input" then
                 if tfind(INFlags, Args[1]) then
@@ -1428,7 +1574,25 @@ do
                 end
                 return NameCall(self, unpack(Args))
             end
+                
+                if Name == "Fire" or Name == "Shoot" then
+                if tfind(INFlags, Args[1]) then
+                    return wait(9e9)
+                end
 
+                if Aimlock and AimlockPlayer and game.PlaceId ~= tonumber(Streets)  and game.PlaceId ~= tonumber(Prison)then
+                    if Args[1]  then
+                        Args[1] = ShootPlayerPos()
+                        return NameCall(self, unpack(Args))
+                    end
+                end
+                if Aimlock and AimlockPlayer and game.PlaceId == tonumber(Prison) and PrisonMode == "PrisonReg" then 
+                    return NameCall(self,ShootPlayerPos())
+                end
+                
+                return NameCall(self, unpack(Args))
+                end
+        
             if self.Parent == ReplicatedStorage or Args[1] == "hey" and Name ~= "SayMessageRequest" then
                 return wait(9e9)
             end
@@ -1436,14 +1600,8 @@ do
 
         return NameCall(self, unpack(Args))
     end
-
-    if syn then
         NewIndex = hookmetamethod(game, "__newindex", newcclosure(NewIndexFunc))
         NameCall = hookmetamethod(game, "__namecall", newcclosure(NameCallFunc))
-    else
-        NewIndex = hookfunction(Raw.__newindex, newcclosure(NewIndexFunc))
-        NameCall = hookfunction(Raw.__namecall, newcclosure(NameCallFunc))
-    end
 end
 
 RunService.RenderStepped:Connect(
@@ -1575,7 +1733,21 @@ NewCommand(
         if Arguments[1] then
             UNESPTARGET = psearch(Arguments[1])
             if UNESPTARGET then 
-          UnEspPlayer(UNESPTARGET)
+         for i = 1,#ESPedPlayers do 
+		local Table = ESPedPlayers[i]
+		if Table then 
+		    esploop:Disconnect()
+		local Player = Table['Player']
+			if Player then 
+				for i,v in pairs(Table) do
+					if v ~= Player then 
+							v:Remove()
+					end
+				end
+				table.remove(ESPedPlayers,i)
+			end
+		end 
+end
             esploop:Disconnect()
           end
             Notify("xen.systems v2", "UnEsping: " .. tostring(UNESPTARGET), "", 2)
@@ -1590,6 +1762,21 @@ NewCommand(
 NewCommand(
     function(Arguments)
         if Arguments[1] then
+             for i = 1,#ESPedPlayers do 
+		local Table = ESPedPlayers[i]
+		if Table then 
+		    esploop:Disconnect()
+		local Player = Table['Player']
+			if Player == Thing then 
+				for i,v in pairs(Table) do
+					if v ~= Player then 
+							v:Remove()
+					end
+				end
+				table.remove(ESPedPlayers,i)
+			end
+		end 
+end
             ESPTARGET = psearch(Arguments[1])
             ESPPlayer(ESPTARGET)
             Notify("xen.systems v2", "ESP Target: " .. tostring(ESPTARGET), "", 2)
@@ -1746,7 +1933,7 @@ local v_1 =
     valuessector:AddSlider(
     "Blinkspeed",
     1,
-    8,
+    1,
     20,
     false,
     function(value)
@@ -1758,6 +1945,16 @@ local aimbotsector = maintab1:CreateSector("Aimbot", "right")
 local spamsector = maintab1:CreateSector("Spam", "left")
 local miscstuff = maintab1:CreateSector("Misc", "right")
 
+miscstuff:AddSlider(
+    "FOV",
+    0,
+    70,
+    130,
+    false,
+    function(value)
+        Camera.FieldOfView = value
+    end
+)
 miscstuff:AddButton(
     "Get Game Last Updated",
     function()
@@ -1874,6 +2071,15 @@ local A_0 =
         Aimlock = state
     end
 )
+
+local A_001 =
+    aimbotsector:AddToggle(
+    "Predict Y",
+    default,
+    function(state)
+        ShootY = state
+    end
+)
 local A_01 =
     A_0:AddKeybind(
     Enum.KeyCode.T,
@@ -1881,7 +2087,23 @@ local A_01 =
         Notify("xen.systems v2", "Aimlocking: " .. Aimlock, "", 2)
     end
 )
-if game.PlaceId ~= tostring(Streets) then
+if game.PlaceId == tonumber(Prison) then 
+     local A_222 =
+        aimbotsector:AddDropdown(
+        "Fire Aimlock Method",
+        {"Keybind", "Regular"},
+        false,
+        false,
+        function(Name)
+            if Name == "Keybind" then
+                PrisonMode = "Keybind"
+            elseif Name == "Regular" then
+                PrisonMode = "PrisonReg"
+            end
+        end
+    )
+end
+
     local A_2 =
         aimbotsector:AddDropdown(
         "AimMode",
@@ -1896,7 +2118,6 @@ if game.PlaceId ~= tostring(Streets) then
             end
         end
     )
-end
 
 local A_20 =
     aimbotsector:AddDropdown(
@@ -2137,25 +2358,88 @@ maintab:AddButton(
     end
 )
 
-local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/LURRRRRRRRRRRRRRRK/lol/main/TS%20ESP.lua"))()
 
-ESP.Boxes = false
-ESP.Tracers = false
-ESP.Names = false
-ESP.TeamMates = true
---ESP.BoxShift = CFrame.new(0,-3,0)
-
-ESP.ShowInfo = false
-ESP.Info.Health = false
-ESP.Info.Weapons = false
-ESP.Info.Name = false
-ESP.Info.Distance = false
-ESP.UseTeamColor = false
-ESP.Info.Ammo = false
 
 local visualstab = window:CreateTab("Visuals")
-local sector0 = visualstab:CreateSector("Kiriot ESP", "left")
+local sector0 = visualstab:CreateSector("ESP Options", "left")
 local bindstab = window:CreateTab("KeyBinds")
+
+local v_2 =
+    sector0:AddDropdown(
+    "Player ESP Font",
+    {"UI", "System", "Plex","Monospace"},
+    false,
+    false,
+    function(Name)
+        if Name == "UI" then
+            EspFont = 0
+        elseif Name == "System" then
+            EspFont = 1
+        elseif Name == "Plex" then
+            EspFont = 2
+        elseif Name == "Monospace" then
+            EspFont = 3
+        end
+    end
+)
+
+local v_4 =
+    sector0:AddDropdown(
+    "Item ESP Font",
+    {"Gotham", "Code", "SourceSans"},
+    false,
+    false,
+    function(Name)
+        if Name == "Gotham" then
+            ItemEspFont = "Gotham"
+        elseif Name == "Code" then
+            ItemEspFont = "Code"
+        elseif Name == "SourceSans" then
+            ItemEspFont = "SourceSans"
+        end
+    end
+)
+
+local v_1 =
+    sector0:AddSlider(
+    "Player ESP Text Size",
+    12,
+    16,
+    30,
+    false,
+    function(value)
+        EspFontSize = value
+    end
+)
+
+local v_1 =
+    sector0:AddSlider(
+    "Item ESP Text Size",
+    12,
+    16,
+    30,
+    false,
+    function(value)
+        ItemEspFontSize = value
+    end
+)
+sector0:AddToggle("Item ESP",default,function(State)
+    ItemEsp = State 
+    if ItemEsp == false then
+        for i,v in pairs(game.Workspace:GetDescendants()) do 
+            if v.Name == "TracerPart" then v:Destroy()
+            end
+        end
+    end
+    if ItemEsp == true then 
+        for i,v in pairs(game.Workspace:GetChildren()) do
+    if v.Name == "RandomSpawner" then
+        itemesppart(v)
+    end
+end
+    end
+    
+end)
 
 local keybindsector = bindstab:CreateSector("Ammo/Food", "left")
 local mainbindsector = bindstab:CreateSector("Movement Keys", "right")
@@ -2212,79 +2496,6 @@ local pshootbox =
 
 local configs = window:CreateTab("Config")
 configs:CreateConfigSystem("left")
-
-local lel1 =
-    sector0:AddToggle(
-    "Enabled",
-    default,
-    function(state)
-        if state == true then
-            ESP:Toggle(true)
-        end
-        if state == false then
-            ESP:Toggle(false)
-        end
-    end
-)
-local lel2 =
-    sector0:AddToggle(
-    "Boxes",
-    default,
-    function(state)
-        ESP.Boxes = state
-    end
-)
-local lel3 =
-    sector0:AddToggle(
-    "Tracers",
-    default,
-    function(state)
-        ESP.Tracers = state
-    end
-)
-sector0:AddSeperator("ESP Info")
-local lel4 =
-    sector0:AddToggle(
-    "ShowInfo",
-    default,
-    function(state)
-        ESP.ShowInfo = state
-    end
-)
-local lel5 =
-    sector0:AddToggle(
-    "Show Health",
-    default,
-    function(state)
-        ESP.Info.Health = state
-    end
-)
-local lel6 =
-    sector0:AddToggle(
-    "Show Names",
-    default,
-    function(state)
-        ESP.Info.Name = state
-        ESP.Names = state
-    end
-)
-local lel7 =
-    sector0:AddToggle(
-    "Show Distance",
-    default,
-    function(state)
-        ESP.Info.Distance = state
-    end
-)
-local lel8 =
-    sector0:AddToggle(
-    "Show Weapon Info",
-    default,
-    function(state)
-        ESP.Info.Weapons = state
-        ESP.Info.Ammo = state
-    end
-)
 
 local MapSector = visualstab:CreateSector("Map", "left")
 local SkySector = visualstab:CreateSector("SkyBox", "left")
